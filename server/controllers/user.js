@@ -1,13 +1,12 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
-const { use } = require("../router/user");
+const image = require("../utils/image");
 
 
 //GET ME me trae datos del usuario qeu le paso el token por header,
 //tiene que ser un usuario activo y logueado
 async function getMe(req,res){
     const { user_id } = req.user;
-
     const response = await User.findById(user_id);
 
     if (!response) {
@@ -42,7 +41,9 @@ async function createUser(req,res){
 
     if(req.files.avatar){
         //TODO : completar la funcion de procesar
-        console.log("procesar avatar");
+        //console.log("procesar avatar");
+        const imagePath = image.getFileName(req.files.avatar);
+        user.avatar = imagePath;
     }
     user.save((error, userStore)=> {
         if(error){
@@ -54,8 +55,46 @@ async function createUser(req,res){
 }
 
 
+async function updateUser(req,res){
+    const { id } = req.params;
+    const userData = req.body;
+    if(userData.password){
+        const salt = bcrypt.genSaltSync(10);
+        const hashPassword = bcrypt.hashSync(userData.password, salt);
+        userData.password = hashPassword;
+    } else {
+        delete userData.password;
+    }
+
+    // Avatar
+    if(req.files.avatar){
+        const imagePath = image.getFileName(req.files.avatar);
+        userData.avatar = imagePath;
+    }
+    
+    User.findByIdAndUpdate({_id: id }, userData, (error)  => {
+        if(error) {
+            res.status(400).send({ msg: "Error al actualizar el usuario" });
+        } else {
+            res.status(200).send({ msg: "Actualizacion correcta" }); 
+        }
+    })
+}
+
+async function deleteUser(req, res){
+    const { id } = req.params;
+    User.findByIdAndDelete(id, (error) => {
+        if(error){
+            res.status(400).send({ msg: "Error al borrar el usuario" });
+        } else{
+            res.status(200).send({ msg: "usuario eliminado" }); 
+        }
+    }) 
+}
+
+
 
 
 module.exports = {
-    getMe, getUsers,createUser,
+    getMe,getUsers,createUser,updateUser,deleteUser,
 };  
