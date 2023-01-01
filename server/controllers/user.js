@@ -65,13 +65,11 @@ async function updateUser(req,res){
     } else {
         delete userData.password;
     }
-
-    // Avatar
+// Avatar
     if(req.files.avatar){
         const imagePath = image.getFileName(req.files.avatar);
         userData.avatar = imagePath;
-    }
-    
+    }    
     User.findByIdAndUpdate({_id: id }, userData, (error)  => {
         if(error) {
             res.status(400).send({ msg: "Error al actualizar el usuario" });
@@ -80,6 +78,7 @@ async function updateUser(req,res){
         }
     })
 }
+
 
 async function deleteUser(req, res){
     const { id } = req.params;
